@@ -2,6 +2,25 @@
 echo '<pre>';
 // print_r($_SERVER);
 
+/*Connect with database using PDO class */
+$dbhostname = 'localhost';
+$dbusername = 'root';
+$dbdatabase = 'githubform';
+$dbpass = '';
+
+$dsn = "mysql:hostname=" . $dbhostname . ";dbname=" . $dbdatabase;
+$pdo = new pdo($dsn, $dbusername, $dbpass);
+
+/* We are creating function here to get all data because we need to run this function on page load as well as when we submit the new data at that time we need to call it again so we can see newly added data into table */
+function showAllData($pdo)
+{
+    return $resultall = $pdo->query("select * from users");
+}
+$resultall = showAllData($pdo);
+// var_dump($result);
+// echo $resultall->rowCount();
+$resultall->setFetchMode(PDO::FETCH_ASSOC);
+
 /* When form is submitting */
 if (isset($_POST['submitformbtn'])) {
     /* Define error array as empty array */
@@ -53,17 +72,11 @@ if (isset($_POST['submitformbtn'])) {
         // echo $userpassword;
         // echo password_verify($userpassword, '$2y$10$J9YPmAqYp.7yqfGIEhhEtuKDEEEyH01ARWoB0yScLEM6eAmc11OhW');
 
-        /*Connect with database using PDO class */
-        $dbhostname = 'localhost';
-        $dbusername = 'root';
-        $dbdatabase = 'githubform';
-        $dbpass = '';
 
-        $dsn = "mysql:hostname=" . $dbhostname . ";dbname=" . $dbdatabase;
-        $pdo = new pdo($dsn, $dbusername, $dbpass);
         // $stmt = $pdo->query("INSERT INTO `users` (`id`, `username`, `useremail`, `userpass`, `inserdata`) VALUES (NULL, 'pdilip84', 'demo@demo.com', 'superman', '2023-07-07 17:02:27')");
 
         /* prepare, bind & execute OR you can direcly do $pdo->query  but that is not safe */
+
         $stmt = $pdo->prepare("INSERT INTO `users` (`id`, `username`, `useremail`, `userpass`, `inserdata`) VALUES (NULL, :username, :useremail, :userpass, now())");
         $stmt->bindValue(':username', $username);
         $stmt->bindValue(':useremail', $useremail);
@@ -74,6 +87,8 @@ if (isset($_POST['submitformbtn'])) {
             $successMsg = 'Data inserted successfully';
         }
     }
+    /* After adding new data , we need to refresh the data table */
+    $resultall = showAllData($pdo);
 }
 
 echo '</pre>';
@@ -85,8 +100,7 @@ echo '</pre>';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHP Form</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
 <body>
@@ -107,32 +121,25 @@ echo '</pre>';
         </div>
         <div class="row">
             <div class="col">
-                <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return CheckFormValidation()"
-                    name="registrationform" enctype="">
+                <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" onsubmit="return CheckFormValidation()" name="registrationform" enctype="">
                     <div class="form-group">
                         <label for="">User Name</label>
-                        <input type="text" name="username" id="username" class="form-control"
-                            placeholder="Your name please" aria-describedby="helpId" required>
+                        <input type="text" name="username" id="username" class="form-control" placeholder="Your name please" aria-describedby="helpId" required>
                         <small id="helpId" class="text-muted">Help text</small>
                     </div>
                     <div class="form-group">
                         <label for="useremail">Email id</label>
-                        <input type="email" name="useremail" id="useremail" class="form-control"
-                            placeholder="Your valid email address" aria-describedby="helpId" required>
+                        <input type="email" name="useremail" id="useremail" class="form-control" placeholder="Your valid email address" aria-describedby="helpId" required>
                         <small id="helpId" class="text-muted">Help text</small>
                     </div>
                     <div class="form-group">
                         <label for="userpassword">Password</label>
-                        <input type="password" name="userpassword" id="userpassword" class="form-control"
-                            placeholder="Must be minimal 6 Character long & max 10" aria-describedby="helpId"
-                            maxlength="10" minlength="6" required>
+                        <input type="password" name="userpassword" id="userpassword" class="form-control" placeholder="Must be minimal 6 Character long & max 10" aria-describedby="helpId" maxlength="10" minlength="6" required>
                         <small id="helpId" class="text-muted">Help text</small>
                     </div>
                     <div class="form-group">
                         <label for="confirmpassword">Confirm Password</label>
-                        <input type="password" name="confirmpassword" id="confirmpassword" class="form-control"
-                            placeholder="Confirm your password" aria-describedby="confirmPasswordhelpId" maxlength="10"
-                            minlength="6" required>
+                        <input type="password" name="confirmpassword" id="confirmpassword" class="form-control" placeholder="Confirm your password" aria-describedby="confirmPasswordhelpId" maxlength="10" minlength="6" required>
                         <small id="confirmPasswordhelpId" class="text-muted">Help text</small>
                     </div>
                     <div class="form-group">
@@ -141,37 +148,58 @@ echo '</pre>';
                 </form>
             </div>
         </div>
+        <div class="row">
+            <?php if (isset($resultall) && ($resultall->rowCount()) > 0) { ?>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        foreach ($resultall->fetchAll() as $key => $value) {
+                            echo "<tr>";
+                            echo "<td scope='row'>" . $value['username'] . "</td>";
+                            echo "<td>" . $value['useremail'] . "</td>";
+                            echo "<td>" . $value['userpass'] . "</td>";
+                            echo "</tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            <?php } ?>
+        </div>
     </div>
 
     <script>
-    console.log('Hello world');
-    let CheckFormValidation = function() {
-        console.log('form is Submitted');
-        let passValue = document.getElementById('userpassword').value;
-        console.log(passValue);
-        let confirmPassValue = document.getElementById('confirmpassword').value;
-        console.log(confirmPassValue);
-        if (passValue !== confirmPassValue) {
-            console.log('Password Not match!');
-            let errorPass = document.getElementById('confirmPasswordhelpId');
-            errorPass.innerHTML = 'Password not matched!';
-            errorPass.classList.remove('text-muted');
-            errorPass.classList.add('text-danger');
-            return false;
+        console.log('Hello world');
+        let CheckFormValidation = function() {
+            console.log('form is Submitted');
+            let passValue = document.getElementById('userpassword').value;
+            console.log(passValue);
+            let confirmPassValue = document.getElementById('confirmpassword').value;
+            console.log(confirmPassValue);
+            if (passValue !== confirmPassValue) {
+                console.log('Password Not match!');
+                let errorPass = document.getElementById('confirmPasswordhelpId');
+                errorPass.innerHTML = 'Password not matched!';
+                errorPass.classList.remove('text-muted');
+                errorPass.classList.add('text-danger');
+                return false;
+            }
+            return true;
         }
-        return true;
-    }
     </script>
 
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous">
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
-        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
-        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
     </script>
 </body>
 
