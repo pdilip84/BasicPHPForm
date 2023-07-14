@@ -24,9 +24,6 @@ if (isset($_REQUEST['edituser']) && !empty($_REQUEST['edituser'])) {
     $edituid = $userData[0];
     $edituname = $userData[1];
     $edituemail = $userData[2];
-    // echo $edituid;
-    // echo $edituname;
-    // echo $edituemail;
 }
 
 /* If request for delete user */
@@ -67,13 +64,6 @@ function selectSingleUser($id, $pdo)
     }
 }
 
-// function updateform($editUid, $editUemail, $editUpassword)
-// {
-//     $updateForm = 1;
-//     // echo $editUemail;
-//     // echo $editUid;
-//     // echo $editUpassword;
-// }
 function deleteUser($id, $pdo)
 {
 
@@ -175,7 +165,10 @@ if (isset($_POST['submitformbtn'])) {
         // echo password_verify($userpassword, '$2y$10$J9YPmAqYp.7yqfGIEhhEtuKDEEEyH01ARWoB0yScLEM6eAmc11OhW');
 
         if (isset($_REQUEST['edituser'])) {
+            // $successMsg = '';
             $successMsg = updateUser($pdo, $_REQUEST['edituser'], $username, $useremail, $userpassword);
+
+            header("Location:index.php?updated=" . $_REQUEST['edituser']);
         } else {
             $successMsg = insertNewUser($pdo, $username, $useremail, $userpassword);
         }
@@ -192,7 +185,7 @@ echo '</pre>';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP Form-dilip</title>
+    <title>PHP Form</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
@@ -207,6 +200,9 @@ echo '</pre>';
                     if (isset($successMsg) && !empty($successMsg)) {
                         echo $successMsg;
                     }
+                    // if (isset($_REQUEST['updated'])) {
+                    //     echo 'User Updated';
+                    // }
                     if (isset($errorStr) && strlen($errorStr) > 0) {
                         echo $errorStr;
                     }
